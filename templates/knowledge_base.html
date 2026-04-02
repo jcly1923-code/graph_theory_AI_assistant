@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if page == 'detail' %}{{ kb_meta.title }} - {% endif %}知识库管理 - 图论学术助手</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    {% if page == 'detail' %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% endif %}
+</head>
+
+<body class="kb-page" data-page="{{ page }}" {% if page == 'detail' %}data-kb-type="{{ kb_type }}"{% endif %} {% if page == 'index' %}id="kb-index-page"{% endif %}>
+    <div class="kb-app-shell">
+        <aside class="kb-sidebar" aria-label="知识库导航">
+            <div class="kb-sidebar-brand">
+                <a href="{{ url_for('knowledge_base_index') }}" class="kb-sidebar-brand-link">📚 知识库管理</a>
+            </div>
+            <a href="/" class="kb-sidebar-link kb-sidebar-link--primary">返回聊天</a>
+            <nav class="kb-sidebar-nav" aria-label="知识库类型">
+                {% for slug, meta in kb_pages.items() %}
+                <a href="{{ url_for('knowledge_base_detail', kb_type=slug) }}"
+                   class="kb-sidebar-nav-item {% if page == 'detail' and kb_type == slug %}is-active{% endif %}">
+                    <span class="kb-sidebar-nav-icon" aria-hidden="true">{{ meta.icon }}</span>
+                    <span>{{ meta.title }}</span>
+                </a>
+                {% endfor %}
+            </nav>
+            {% if page == 'index' %}
+            <p class="kb-sidebar-hint">在右侧选择一项知识库进入详情。</p>
+            {% endif %}
+        </aside>
+        <main class="kb-main">
+        <div class="header header--classic">
+            {% if page == 'detail' %}
+            <nav class="kb-header-breadcrumb" aria-label="面包屑导航">
+                <a href="{{ url_for('knowledge_base_index') }}">知识库管理</a><span class="kb-breadcrumb-sep">/</span><span class="kb-header-breadcrumb-current">{{ kb_meta.title }}</span>
+            </nav>
+            {% endif %}
+            <div class="kb-header-main">
+                <div class="kb-header-text">
+                    {% if page == 'index' %}
+                    <h1>📚 知识库管理</h1>
+                    <p class="kb-header-desc">选择要管理的知识库，进入详情页进行编辑与维护。</p>
+                    {% else %}
+                    <h1>{{ kb_meta.icon }} {{ kb_meta.title }}</h1>
+                    <p class="kb-header-desc">{{ kb_meta.description }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if page == 'index' %}
+        <ul class="kb-index-list">
+            {% for slug, meta in kb_pages.items() %}
+            <li>
+                <a href="{{ url_for('knowledge_base_detail', kb_type=slug) }}" class="kb-index-card">
+                    <span class="kb-index-card-icon">{{ meta.icon }}</span>
+                    <div class="kb-index-card-body">
+                        <span class="kb-index-card-title">{{ meta.title }}</span>
+                        <span class="kb-index-card-desc">{{ meta.description }}</span>
+                        <span class="kb-index-card-stats" id="kb-index-stats-{{ slug }}">加载中…</span>
+                    </div>
+                    <span class="kb-index-card-arrow">→</span>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if page == 'detail' %}
+        <div class="kb-container">
+            {% if kb_type == 'term' %}
+            <!-- 术语知识库配置区域 (可编辑) -->
+            <div class="kb-section editable">
+                <div class="kb-header">
+                    <h2>{{ kb_meta.icon }} {{ kb_meta.title }}</h2>
+                    <span class="kb-badge">{{ kb_meta.badge }}</span>
+                </div>
+                <div class="kb-stats" id="term-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">状态:</span>
+                        <span class="stat-value" id="term-status">加载中...</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">片段数:</span>
+                        <span class="stat-value" id="term-chunks">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">总字符数:</span>
+                        <span class="stat-value" id="term-chars">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">平均长度:</span>
+                        <span class="stat-value" id="term-avg">-</span>
+                    </div>
+                </div>
+                
+                <div class="term-editor">
+                    <div class="editor-header">
+                        <h3>编辑术语库</h3>
+                        <!-- 修改术语知识库部分的按钮 -->
+                        <div class="editor-actions">
+                            <button id="load-term-btn" class="btn-secondary">📂 加载当前术语</button>
+                            <button id="view-term-chunks-btn" class="btn-primary">🔍 查看分段情况</button>
+                            <button id="rebuild-term-btn" class="btn-warning">🔄 重建索引</button>
+                        </div>
+                    </div>
+                    <textarea id="term-editor" class="term-textarea" placeholder="每行一个术语，格式：术语名：定义"></textarea>
+                    <div class="editor-hint">
+                        <p>💡 提示：每段一个术语，建议使用 "术语 / 定义 / 语境" 的格式，例如：</p>
+                        <pre>
+【术语】cycle（圈）
+【定义】一条长度大于等于3的、首尾相交的路径，其中除了起点和终点是同一个顶点外，其余顶点和边都不重复。
+【语境】"A graph is bipartite if and only if it contains no odd cycle." → "图是二分图当且仅当它不包含奇圈。"
+                        </pre>
+                    </div>
+                </div>
+            </div>
+
+            {% elif kb_type == 'paper' %}
+            <!-- 论文知识库：左侧论文列表 + 右侧分段详情 -->
+            <div class="kb-section editable kb-section--master-detail">
+                <div class="kb-header">
+                    <h2>{{ kb_meta.icon }} {{ kb_meta.title }}</h2>
+                    <span class="kb-badge">{{ kb_meta.badge }}</span>
+                </div>
+                <div class="kb-stats" id="paper-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">状态:</span>
+                        <span class="stat-value" id="paper-status">加载中...</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">论文数:</span>
+                        <span class="stat-value" id="paper-count">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">片段数:</span>
+                        <span class="stat-value" id="paper-chunks">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">总字符数:</span>
+                        <span class="stat-value" id="paper-chars">-</span>
+                    </div>
+                </div>
+                <div class="kb-toolbar-row">
+                    <button type="button" id="add-paper-btn" class="btn-success">➕ 新增论文</button>
+                    <button type="button" id="export-paper-btn" class="btn-secondary">📥 导出统计</button>
+                </div>
+                <div class="kb-master-detail">
+                    <aside class="kb-md-nav" aria-label="论文列表">
+                        <input type="search" id="paper-nav-search" class="kb-md-search" placeholder="搜索论文标题或文件名" autocomplete="off">
+                        <div class="kb-md-nav-caption">论文列表</div>
+                        <div id="paper-nav-list" class="kb-md-nav-list"></div>
+                    </aside>
+                    <main class="kb-md-main">
+                        <div id="paper-detail-empty" class="kb-md-empty">请从左侧选择一篇论文查看分段</div>
+                        <div id="paper-detail-inner" class="kb-md-detail-inner" hidden>
+                            <div class="kb-md-detail-head">
+                                <span class="kb-md-detail-icon" aria-hidden="true">📄</span>
+                                <div class="kb-md-detail-head-text">
+                                    <h3 id="paper-detail-title" class="kb-md-detail-title"></h3>
+                                    <div class="kb-md-tags">
+                                        <span class="kb-tag">本地</span>
+                                        <span class="kb-tag">自动分段</span>
+                                    </div>
+                                </div>
+                                <div class="kb-md-detail-actions">
+                                    <button type="button" id="paper-add-segment-btn" class="btn-success btn-sm">➕ 添加片段</button>
+                                    <button type="button" id="paper-delete-paper-btn" class="btn-secondary btn-sm">删除论文</button>
+                                </div>
+                            </div>
+                            <div id="paper-segment-strip" class="kb-segment-strip" aria-label="分段切换"></div>
+                            <div id="paper-detail-content" class="kb-md-content" tabindex="0"></div>
+                            <div class="kb-md-chunk-actions">
+                                <button type="button" id="paper-edit-chunk-btn" class="btn-primary btn-sm">编辑片段</button>
+                                <button type="button" id="paper-delete-chunk-btn" class="btn-secondary btn-sm">删除片段</button>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+
+            {% elif kb_type == 'background' %}
+            <!-- 背景知识库：左侧片段列表 + 右侧正文 -->
+            <div class="kb-section editable kb-section--master-detail">
+                <div class="kb-header">
+                    <h2>{{ kb_meta.icon }} {{ kb_meta.title }}</h2>
+                    <span class="kb-badge">{{ kb_meta.badge }}</span>
+                </div>
+                <div class="kb-stats" id="background-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">状态:</span>
+                        <span class="stat-value" id="background-status">加载中...</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">片段数:</span>
+                        <span class="stat-value" id="background-chunks">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">总字符数:</span>
+                        <span class="stat-value" id="background-chars">-</span>
+                    </div>
+                </div>
+                <div class="kb-toolbar-row">
+                    <button type="button" id="add-background-btn" class="btn-success">➕ 新增片段</button>
+                    <button type="button" id="export-background-btn" class="btn-secondary">📥 导出统计</button>
+                </div>
+                <div class="kb-master-detail">
+                    <aside class="kb-md-nav" aria-label="片段列表">
+                        <input type="search" id="bg-nav-search" class="kb-md-search" placeholder="搜索片段内容" autocomplete="off">
+                        <div class="kb-md-nav-caption">片段列表</div>
+                        <div id="bg-nav-list" class="kb-md-nav-list"></div>
+                    </aside>
+                    <main class="kb-md-main">
+                        <div id="bg-detail-empty" class="kb-md-empty">请从左侧选择一个片段</div>
+                        <div id="bg-detail-inner" class="kb-md-detail-inner" hidden>
+                            <div class="kb-md-detail-head">
+                                <span class="kb-md-detail-icon" aria-hidden="true">📋</span>
+                                <div class="kb-md-detail-head-text">
+                                    <h3 id="bg-detail-title" class="kb-md-detail-title">背景片段</h3>
+                                    <div class="kb-md-tags">
+                                        <span class="kb-tag">背景知识</span>
+                                        <span class="kb-tag">自动分段</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="bg-detail-meta" class="kb-md-meta"></div>
+                            <div id="bg-detail-content" class="kb-md-content" tabindex="0"></div>
+                            <div class="kb-md-chunk-actions">
+                                <button type="button" id="bg-edit-chunk-btn" class="btn-primary btn-sm">编辑片段</button>
+                                <button type="button" id="bg-delete-chunk-btn" class="btn-secondary btn-sm">删除片段</button>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        {% endif %}
+        </main>
+    </div>
+
+    {% if page == 'detail' %}
+        <!-- 分段详情模态框 -->
+        <div id="chunks-modal" class="modal">
+            <div class="modal-content modal-lg">
+                <div class="modal-header">
+                    <h2 id="chunks-modal-title">分段详情</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="chunks-list" id="chunks-list"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary modal-close-btn">关闭</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 论文列表模态框 -->
+        <div id="papers-modal" class="modal">
+            <div class="modal-content modal-lg">
+                <div class="modal-header">
+                    <h2>📚 论文列表</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="papers-list" class="papers-list">
+                        <div class="loading-text">加载中...</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary modal-close-btn">关闭</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 论文片段模态框 -->
+        <div id="paper-chunks-modal" class="modal">
+            <div class="modal-content modal-lg">
+                <div class="modal-header">
+                    <h2 id="paper-chunks-title">论文片段</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="paper-chunks-list" class="chunks-list"></div>
+                </div>
+                <div class="modal-footer">
+                    <button id="add-chunk-to-paper-btn" class="btn-success">➕ 添加片段</button>
+                    <button class="btn-secondary modal-close-btn">关闭</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 编辑片段模态框 -->
+        <div id="edit-chunk-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📝 编辑片段</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <textarea id="edit-chunk-content" class="chunk-editor" placeholder="输入片段内容..."></textarea>
+                    <input type="hidden" id="edit-chunk-index">
+                    <input type="hidden" id="edit-chunk-paper-id">
+                    <input type="hidden" id="edit-chunk-type">
+                </div>
+                <div class="modal-footer">
+                    <button id="save-chunk-btn" class="btn-primary">💾 保存</button>
+                    <button class="btn-secondary modal-close-btn">取消</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 新增论文模态框 -->
+        <div id="add-paper-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>➕ 新增论文</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>论文标题：</label>
+                        <input type="text" id="new-paper-title" class="form-input" placeholder="输入论文标题">
+                    </div>
+                    <div class="form-group">
+                        <label>文件名（可选）：</label>
+                        <input type="text" id="new-paper-filename" class="form-input" placeholder="输入文件名">
+                    </div>
+                    <div class="form-group">
+                        <label>知识片段（每段之间用空行分隔）：</label>
+                        <textarea id="new-paper-chunks" class="chunk-editor" placeholder="输入知识片段内容..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="save-new-paper-btn" class="btn-primary">💾 保存</button>
+                    <button class="btn-secondary modal-close-btn">取消</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 背景知识库片段模态框 -->
+        <div id="background-chunks-modal" class="modal">
+            <div class="modal-content modal-lg">
+                <div class="modal-header">
+                    <h2>📋 背景知识库片段</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="background-chunks-list" class="chunks-list"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary modal-close-btn">关闭</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 新增背景片段模态框 -->
+        <div id="add-background-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>➕ 新增背景知识</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>知识内容（会自动分段）：</label>
+                        <textarea id="new-background-content" class="chunk-editor" placeholder="输入背景知识内容..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="save-background-btn" class="btn-primary">💾 保存</button>
+                    <button class="btn-secondary modal-close-btn">取消</button>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- CSS文件 -->
+    <link rel="stylesheet" href="/static/knowledge_base.css">
+
+    {% if page == 'detail' %}
+    <script src="/static/knowledge_base.js"></script>
+    {% else %}
+    <script>
+    (function () {
+        function loadTheme() {
+            try {
+                var settings = JSON.parse(localStorage.getItem('assistantSettings') || '{}');
+                var theme = settings.theme || 'light';
+                if (theme === 'dark') document.body.classList.add('dark-mode');
+                else if (theme === 'light') document.body.classList.remove('dark-mode');
+                else if (theme === 'system') {
+                    if (window.matchMedia('(prefers-color-scheme: dark)').matches)
+                        document.body.classList.add('dark-mode');
+                    else document.body.classList.remove('dark-mode');
+                }
+            } catch (e) { console.error(e); }
+        }
+        function formatNum(n) {
+            if (n === undefined || n === null) return '-';
+            return Number(n).toLocaleString();
+        }
+        async function initKbIndex() {
+            loadTheme();
+            try {
+                var r = await fetch('/api/kb/stats');
+                var data = await r.json();
+                if (!data.success) return;
+                function line(slug, stats) {
+                    var el = document.getElementById('kb-index-stats-' + slug);
+                    if (!el || !stats) return;
+                    if (!stats.exists) {
+                        el.textContent = '未创建索引';
+                        return;
+                    }
+                    var parts = ['片段 ' + formatNum(stats.chunk_count), '字符 ' + formatNum(stats.total_chars)];
+                    el.textContent = parts.join(' · ');
+                }
+                line('term', data.term);
+                line('background', data.background);
+                var pel = document.getElementById('kb-index-stats-paper');
+                if (pel && data.paper && data.paper.exists) {
+                    var pr = await fetch('/api/kb/paper/papers');
+                    var pd = await pr.json();
+                    var n = (pd.success && pd.papers) ? pd.papers.length : 0;
+                    pel.textContent = '论文 ' + n + ' 篇 · 片段 ' + formatNum(data.paper.chunk_count) + ' · 字符 ' + formatNum(data.paper.total_chars);
+                } else if (pel && data.paper && !data.paper.exists) {
+                    pel.textContent = '未创建索引';
+                }
+            } catch (e) { console.error(e); }
+        }
+        document.addEventListener('DOMContentLoaded', initKbIndex);
+    })();
+    </script>
+    {% endif %}
+</body>
+
+</html>

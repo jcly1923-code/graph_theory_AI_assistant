@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图论学术助手</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js"></script>
+</head>
+
+<body>
+    <div class="app-shell">
+        <aside class="app-sidebar" aria-label="应用导航">
+            <div class="app-sidebar-brand">
+                <span class="app-sidebar-logo" aria-hidden="true">📐</span>
+                <span class="app-sidebar-name">图论学术助手</span>
+            </div>
+            <div class="app-sidebar-meta">
+                <span id="mode-status" class="mode-status">模式：正常模式</span>
+            </div>
+            <nav class="app-sidebar-nav" aria-label="快捷入口">
+                <a href="/knowledge_base" class="app-sidebar-link" title="知识库管理">
+                    <span class="app-sidebar-link-icon" aria-hidden="true">📚</span>
+                    <span>知识库</span>
+                </a>
+            </nav>
+            <div class="app-sidebar-footer">
+                <button id="settings-btn" class="settings-btn settings-btn--block" type="button" title="高级设置">
+                    <span class="settings-icon">⚙️</span>
+                    <span class="settings-text">设置</span>
+                </button>
+                <button id="clear-history-btn" class="clear-btn clear-btn--block" type="button" title="清除对话历史">
+                    <span class="clear-icon">🗑️</span>
+                    <span class="clear-text">清除历史</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="app-main">
+            <header class="app-main-header">
+                <h1 class="app-main-title">图论学术助手</h1>
+                <p class="app-main-desc">体验与 AI 智能体的自然对话，支持图论论文解析、可复用背景沉淀与专业问答（路由由主 Agent 自动判断）。</p>
+            </header>
+
+        <div class="chat-container">
+            <div class="chat-box" id="chat-box">
+            </div>
+
+            <details class="assistant-log-panel" id="assistant-log-panel" open>
+                <summary class="assistant-log-summary">运行日志</summary>
+                <div class="assistant-log-body" id="assistant-log"></div>
+            </details>
+
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea id="message" placeholder="输入您的问题..." maxlength="5000" autocomplete="off" rows="1"></textarea>
+                    <span class="char-count" id="char-count">0/5000</span>
+                </div>
+                <div class="button-group">
+                    <button id="upload-btn" class="btn-icon" title="上传PDF文件">
+                        <span class="btn-icon-text">📎</span>
+                    </button>
+                    <button id="send">
+                        <span id="send-text">发送</span>
+                        <span id="send-icon" style="display: none;">⏎</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="upload-status" class="upload-status" style="display: none;"></div>
+            <input type="file" id="file-input" accept=".pdf" style="display: none;">
+        </div>
+        </main>
+    </div>
+
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ 高级设置</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h3>🤖 API 配置</h3>
+                    <div class="settings-item">
+                        <label for="api-provider">模型供应商：</label>
+                        <select id="api-provider" class="model-select">
+                            <option value="custom">自定义</option>
+                            <option value="alibaba">阿里百炼</option>
+                        </select>
+                    </div>
+                    <div class="settings-item">
+                        <label for="api-base-url">API 基础地址：</label>
+                        <input type="text" id="api-base-url" placeholder="https://api.openai.com/v1">
+                    </div>
+                    <div class="settings-item">
+                        <label for="api-key">API Key：</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="api-key" placeholder="sk-...">
+                            <button type="button" id="toggle-api-key" class="toggle-password-btn" title="显示/隐藏密码">
+                                <span id="toggle-icon">👁️</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="settings-item">
+                        <label for="model-name">模型名称：</label>
+                        <select id="model-name" class="model-select">
+                            <option value="gpt-5.2-chat">gpt-5.2-chat</option>
+                            <option value="gemini-3-pro-preview">gemini-3-pro-preview</option>
+                            <option value="claude-haiku-4-5-20251001">claude-haiku-4-5-20251001</option>
+                            <option value="deepseek-v3.2">deepseek-v3.2</option>
+                            <option value="glm-4.5">glm-4.5</option>
+                        </select>
+                    </div>
+                    <div class="settings-item">
+                        <label for="temperature">温度 (Temperature)：</label>
+                        <input type="range" id="temperature" min="0" max="2" step="0.1" value="0.7">
+                        <span id="temperature-value">0.7</span>
+                    </div>
+                    <div class="settings-item test-mode-item">
+                        <label for="test-mode">测试模式：</label>
+                        <div class="switch-row">
+                            <label class="switch" title="开启后将使用本地模拟数据，不调用外部模型接口">
+                                <input type="checkbox" id="test-mode">
+                                <span class="slider"></span>
+                            </label>
+                            <span id="test-mode-text" class="switch-text">关闭（正常模式）</span>
+                        </div>
+                    </div>
+                    <div class="settings-note">
+                        <p>📝 测试模式开启后将走本地模拟数据；关闭后为正常模式，需要配置 API 信息。</p>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>🔍 知识库检索配置</h3>
+                    <div class="settings-item">
+                        <label for="term-similarity-threshold">📚 术语库相似度阈值：</label>
+                        <input type="range" id="term-similarity-threshold" min="0" max="1" step="0.05" value="0.5">
+                        <span id="term-threshold-value">0.50</span>
+                    </div>
+                    <div class="settings-item">
+                        <label for="term-max-results">📚 术语库最大检索数量：</label>
+                        <input type="number" id="term-max-results" min="1" max="30" value="15">
+                    </div>
+                    <div class="settings-item">
+                        <label for="background-similarity-threshold">🌐 背景库相似度阈值：</label>
+                        <input type="range" id="background-similarity-threshold" min="0" max="1" step="0.05" value="0.5">
+                        <span id="background-threshold-value">0.50</span>
+                    </div>
+                    <div class="settings-item">
+                        <label for="background-max-results">🌐 背景库最大检索数量：</label>
+                        <input type="number" id="background-max-results" min="1" max="20" value="5">
+                    </div>
+                    <div class="settings-item">
+                        <label for="paper-similarity-threshold">📄 论文库相似度阈值：</label>
+                        <input type="range" id="paper-similarity-threshold" min="0" max="1" step="0.05" value="0.5">
+                        <span id="paper-threshold-value">0.50</span>
+                    </div>
+                    <div class="settings-item">
+                        <label for="paper-max-results">📄 论文库最大检索数量：</label>
+                        <input type="number" id="paper-max-results" min="1" max="20" value="5">
+                    </div>
+                    <div class="settings-note">
+                        <p>📝 三个知识库均独立配置相似度阈值与最大检索数量。阈值越高，结果越相关但数量可能越少。</p>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>🎨 主题设置</h3>
+                    <div class="settings-item">
+                        <label>界面主题：</label>
+                        <div class="theme-options">
+                            <button id="theme-light" class="theme-option active">☀️ 日间模式</button>
+                            <button id="theme-dark" class="theme-option">🌙 夜间模式</button>
+                            <button id="theme-system" class="theme-option">🖥️ 跟随系统</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>📁 预留设置项</h3>
+                    <div class="settings-item disabled">
+                        <label>📊 对话记录管理</label>
+                        <span class="coming-soon">即将上线</span>
+                    </div>
+                    <div class="settings-item disabled">
+                        <label>🔊 语音输入输出</label>
+                        <span class="coming-soon">即将上线</span>
+                    </div>
+                    <div class="settings-item disabled">
+                        <label>📝 自定义提示词</label>
+                        <span class="coming-soon">即将上线</span>
+                    </div>
+                    <div class="settings-item disabled">
+                        <label>🌐 多语言支持</label>
+                        <span class="coming-soon">即将上线</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="settings-cancel" class="btn-secondary">取消</button>
+                <button id="settings-save" class="btn-primary">保存设置</button>
+            </div>
+        </div>
+    </div>
+
+    <link rel="stylesheet" href="/static/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin></script>
+    <script src="/static/index.js"></script>
+</body>
+
+</html>

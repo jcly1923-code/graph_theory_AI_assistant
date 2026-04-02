@@ -1,0 +1,27 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment files
+.env
+
+# IDE / OS
+.vscode/
+.qoder/
+.idea/
+Thumbs.db
+.DS_Store
+
+# 本地向量模型（体积大，克隆后请运行 python utils/download.py 生成）
+local_models/
+
+# 生成内容
+knowledge/
+论文/
+dist/
+build/
