@@ -5,18 +5,14 @@
 // ============= DOM 元素 =============
 const DOM = {
     // 术语知识库
-    termStatus: document.getElementById('term-status'),
     termChunks: document.getElementById('term-chunks'),
     termChars: document.getElementById('term-chars'),
-    termAvg: document.getElementById('term-avg'),
     termEditor: document.getElementById('term-editor'),
     loadTermBtn: document.getElementById('load-term-btn'),
     viewTermChunksBtn: document.getElementById('view-term-chunks-btn'),
     rebuildTermBtn: document.getElementById('rebuild-term-btn'),
     
     // 论文知识库
-    paperStatus: document.getElementById('paper-status'),
-    paperCount: document.getElementById('paper-count'),
     paperChunks: document.getElementById('paper-chunks'),
     paperChars: document.getElementById('paper-chars'),
     addPaperBtn: document.getElementById('add-paper-btn'),
@@ -34,7 +30,6 @@ const DOM = {
     paperDeleteChunkBtn: document.getElementById('paper-delete-chunk-btn'),
     
     // 背景知识库
-    backgroundStatus: document.getElementById('background-status'),
     backgroundChunks: document.getElementById('background-chunks'),
     backgroundChars: document.getElementById('background-chars'),
     addBackgroundBtn: document.getElementById('add-background-btn'),
@@ -108,6 +103,20 @@ function setLoading(element, isLoading) {
     }
 }
 
+/** 顶栏片段数/总字符数加载态（术语库加载/重建时） */
+function setHeaderStatsLoading(chunksEl, charsEl, isLoading) {
+    if (!chunksEl || !charsEl) return;
+    if (isLoading) {
+        chunksEl.classList.add('loading');
+        charsEl.classList.add('loading');
+        chunksEl.textContent = '…';
+        charsEl.textContent = '…';
+    } else {
+        chunksEl.classList.remove('loading');
+        charsEl.classList.remove('loading');
+    }
+}
+
 function showNotification(message, type = 'info') {
     const existing = document.querySelector('.simple-notification');
     if (existing) existing.remove();
@@ -173,27 +182,20 @@ async function fetchKBStats() {
  * 更新统计信息UI
  */
 function updateStatsUI() {
-    // 术语知识库（仅详情页 term 存在对应 DOM）
-    if (State.termStats && DOM.termStatus) {
-        DOM.termStatus.textContent = State.termStats.exists ? '✅ 已创建' : '❌ 未创建';
+    // 术语知识库（顶栏 meta）
+    if (State.termStats && DOM.termChunks && DOM.termChars) {
         DOM.termChunks.textContent = formatNumber(State.termStats.chunk_count);
         DOM.termChars.textContent = formatNumber(State.termStats.total_chars);
-        DOM.termAvg.textContent = formatNumber(State.termStats.avg_chunk_size);
     }
 
     // 论文知识库
-    if (State.paperStats && DOM.paperStatus) {
-        DOM.paperStatus.textContent = State.paperStats.exists ? '✅ 已创建' : '❌ 未创建';
+    if (State.paperStats && DOM.paperChunks && DOM.paperChars) {
         DOM.paperChunks.textContent = formatNumber(State.paperStats.chunk_count);
         DOM.paperChars.textContent = formatNumber(State.paperStats.total_chars);
-        if (State.papers && DOM.paperCount) {
-            DOM.paperCount.textContent = formatNumber(State.papers.length);
-        }
     }
 
     // 背景知识库
-    if (State.backgroundStats && DOM.backgroundStatus) {
-        DOM.backgroundStatus.textContent = State.backgroundStats.exists ? '✅ 已创建' : '❌ 未创建';
+    if (State.backgroundStats && DOM.backgroundChunks && DOM.backgroundChars) {
         DOM.backgroundChunks.textContent = formatNumber(State.backgroundStats.chunk_count);
         DOM.backgroundChars.textContent = formatNumber(State.backgroundStats.total_chars);
     }
@@ -203,7 +205,7 @@ function updateStatsUI() {
  * 加载术语库内容
  */
 async function loadTermContent() {
-    setLoading(DOM.termStatus, true);
+    setHeaderStatsLoading(DOM.termChunks, DOM.termChars, true);
     DOM.termEditor.value = '加载中...';
     
     try {
@@ -227,7 +229,7 @@ async function loadTermContent() {
         DOM.termEditor.value = '// 加载失败: ' + error.message;
         showNotification('加载术语库失败: ' + error.message, 'error');
     } finally {
-        setLoading(DOM.termStatus, false);
+        setHeaderStatsLoading(DOM.termChunks, DOM.termChars, false);
     }
 }
 
@@ -249,7 +251,7 @@ async function rebuildTermIndex() {
         // 后端会处理空字符串并创建默认内容
     }
     
-    setLoading(DOM.termStatus, true);
+    setHeaderStatsLoading(DOM.termChunks, DOM.termChars, true);
     showNotification('正在重建术语库索引...', 'info');
     
     try {
@@ -293,8 +295,9 @@ async function rebuildTermIndex() {
     } catch (error) {
         console.error('重建术语库失败:', error);
         showNotification('重建失败: ' + error.message, 'error');
+        await fetchKBStats();
     } finally {
-        setLoading(DOM.termStatus, false);
+        setHeaderStatsLoading(DOM.termChunks, DOM.termChars, false);
     }
 }
 

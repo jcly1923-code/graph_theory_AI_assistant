@@ -97,8 +97,20 @@ function updateModeStatus() {
     DOM.modeStatus.classList.toggle('testing', isTest);
 
     if (DOM.testModeText) {
-        DOM.testModeText.textContent = isTest ? '开启（测试模式）' : '关闭（正常模式）';
+        DOM.testModeText.textContent = isTest ? '开启' : '关闭';
     }
+}
+
+/** 有输入时再显示字数，避免空框旁常驻「0/5000」 */
+function syncCharCountUI() {
+    if (!DOM.messageInput || !DOM.charCount) return;
+    const len = DOM.messageInput.value.length;
+    const wrapper = DOM.messageInput.closest('.input-wrapper');
+    if (wrapper) {
+        wrapper.classList.toggle('input-wrapper--has-count', len > 0);
+    }
+    DOM.charCount.textContent = `${len}/5000`;
+    DOM.charCount.setAttribute('aria-hidden', len === 0 ? 'true' : 'false');
 }
 
 // ============= 加载保存的设置 =============
@@ -433,7 +445,7 @@ async function uploadPDF(file) {
             // showPDFContext();
             
             // DOM.messageInput.value = `请分析这篇PDF文档：${file.name}`;
-            DOM.charCount.textContent = `${DOM.messageInput.value.length}/5000`;
+            syncCharCountUI();
         } else {
             throw new Error(data.error || '上传失败');
         }
@@ -774,7 +786,7 @@ async function sendMessage() {
     addMessage('user', userMessageContent);
     DOM.messageInput.value = '';
     DOM.messageInput.style.height = 'auto';
-    DOM.charCount.textContent = '0/5000';
+    syncCharCountUI();
 
     // 锁定界面
     State.isSending = true;
@@ -931,9 +943,7 @@ function initEventListeners() {
         }
         
         DOM.messageInput.addEventListener('input', () => {
-            if (DOM.charCount) {
-                DOM.charCount.textContent = `${DOM.messageInput.value.length}/5000`;
-            }
+            syncCharCountUI();
             // 自动调整高度
             autoResizeTextarea();
         });
@@ -1051,7 +1061,7 @@ function initEventListeners() {
         DOM.testMode.addEventListener('change', () => {
             const isTest = DOM.testMode.checked;
             if (DOM.testModeText) {
-                DOM.testModeText.textContent = isTest ? '开启（测试模式）' : '关闭（正常模式）';
+                DOM.testModeText.textContent = isTest ? '开启' : '关闭';
             }
         });
     }
@@ -1158,6 +1168,7 @@ function initEventListeners() {
 document.addEventListener('DOMContentLoaded', () => {
     loadSettings();
     initEventListeners();
+    syncCharCountUI();
     if (DOM.messageInput) {
         DOM.messageInput.focus();
     }

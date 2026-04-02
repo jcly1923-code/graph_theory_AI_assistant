@@ -7,7 +7,7 @@
     <title>图论学术助手</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js"></script>
@@ -20,17 +20,15 @@
                 <span class="app-sidebar-logo" aria-hidden="true">📐</span>
                 <span class="app-sidebar-name">图论学术助手</span>
             </div>
-            <div class="app-sidebar-meta">
-                <span id="mode-status" class="mode-status">模式：正常模式</span>
-            </div>
-            <nav class="app-sidebar-nav" aria-label="快捷入口">
+            <p class="app-sidebar-desc">图论论文解析、知识沉淀与智能问答。</p>
+            <nav class="app-sidebar-nav" aria-label="主导航">
                 <a href="/knowledge_base" class="app-sidebar-link" title="知识库管理">
                     <span class="app-sidebar-link-icon" aria-hidden="true">📚</span>
                     <span>知识库</span>
                 </a>
             </nav>
             <div class="app-sidebar-footer">
-                <button id="settings-btn" class="settings-btn settings-btn--block" type="button" title="高级设置">
+                <button id="settings-btn" class="settings-btn settings-btn--block" type="button" title="设置">
                     <span class="settings-icon">⚙️</span>
                     <span class="settings-text">设置</span>
                 </button>
@@ -42,16 +40,12 @@
         </aside>
 
         <main class="app-main">
-            <header class="app-main-header">
-                <h1 class="app-main-title">图论学术助手</h1>
-                <p class="app-main-desc">体验与 AI 智能体的自然对话，支持图论论文解析、可复用背景沉淀与专业问答（路由由主 Agent 自动判断）。</p>
-            </header>
-
+        <div class="app-layout-content">
         <div class="chat-container">
             <div class="chat-box" id="chat-box">
             </div>
 
-            <details class="assistant-log-panel" id="assistant-log-panel" open>
+            <details class="assistant-log-panel" id="assistant-log-panel">
                 <summary class="assistant-log-summary">运行日志</summary>
                 <div class="assistant-log-body" id="assistant-log"></div>
             </details>
@@ -59,7 +53,7 @@
             <div class="input-container">
                 <div class="input-wrapper">
                     <textarea id="message" placeholder="输入您的问题..." maxlength="5000" autocomplete="off" rows="1"></textarea>
-                    <span class="char-count" id="char-count">0/5000</span>
+                    <span class="char-count" id="char-count" aria-live="polite">0/5000</span>
                 </div>
                 <div class="button-group">
                     <button id="upload-btn" class="btn-icon" title="上传PDF文件">
@@ -75,13 +69,14 @@
             <div id="upload-status" class="upload-status" style="display: none;"></div>
             <input type="file" id="file-input" accept=".pdf" style="display: none;">
         </div>
+        </div>
         </main>
     </div>
 
     <div id="settings-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>⚙️ 高级设置</h2>
+                <h2>设置</h2>
                 <button class="modal-close">&times;</button>
             </div>
             <div class="modal-body">
@@ -129,11 +124,8 @@
                                 <input type="checkbox" id="test-mode">
                                 <span class="slider"></span>
                             </label>
-                            <span id="test-mode-text" class="switch-text">关闭（正常模式）</span>
+                            <span id="test-mode-text" class="switch-text">关闭</span>
                         </div>
-                    </div>
-                    <div class="settings-note">
-                        <p>📝 测试模式开启后将走本地模拟数据；关闭后为正常模式，需要配置 API 信息。</p>
                     </div>
                 </div>
 
@@ -167,7 +159,7 @@
                         <input type="number" id="paper-max-results" min="1" max="20" value="5">
                     </div>
                     <div class="settings-note">
-                        <p>📝 三个知识库均独立配置相似度阈值与最大检索数量。阈值越高，结果越相关但数量可能越少。</p>
+                        <p>各库独立配置。阈值越高，命中越少、相关性越强。</p>
                     </div>
                 </div>
 
@@ -183,25 +175,6 @@
                     </div>
                 </div>
 
-                <div class="settings-section">
-                    <h3>📁 预留设置项</h3>
-                    <div class="settings-item disabled">
-                        <label>📊 对话记录管理</label>
-                        <span class="coming-soon">即将上线</span>
-                    </div>
-                    <div class="settings-item disabled">
-                        <label>🔊 语音输入输出</label>
-                        <span class="coming-soon">即将上线</span>
-                    </div>
-                    <div class="settings-item disabled">
-                        <label>📝 自定义提示词</label>
-                        <span class="coming-soon">即将上线</span>
-                    </div>
-                    <div class="settings-item disabled">
-                        <label>🌐 多语言支持</label>
-                        <span class="coming-soon">即将上线</span>
-                    </div>
-                </div>
             </div>
             <div class="modal-footer">
                 <button id="settings-cancel" class="btn-secondary">取消</button>

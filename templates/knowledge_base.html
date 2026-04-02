@@ -7,7 +7,7 @@
     <title>{% if page == 'detail' %}{{ kb_meta.title }} - {% endif %}知识库管理 - 图论学术助手</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     {% if page == 'detail' %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     {% endif %}
@@ -20,7 +20,8 @@
                 <a href="{{ url_for('knowledge_base_index') }}" class="kb-sidebar-brand-link">📚 知识库管理</a>
             </div>
             <a href="/" class="kb-sidebar-link kb-sidebar-link--primary">返回聊天</a>
-            <nav class="kb-sidebar-nav" aria-label="知识库类型">
+            <p class="kb-sidebar-nav-label" id="kb-sidebar-nav-heading">导航菜单</p>
+            <nav class="kb-sidebar-nav" aria-labelledby="kb-sidebar-nav-heading">
                 {% for slug, meta in kb_pages.items() %}
                 <a href="{{ url_for('knowledge_base_detail', kb_type=slug) }}"
                    class="kb-sidebar-nav-item {% if page == 'detail' and kb_type == slug %}is-active{% endif %}">
@@ -34,22 +35,62 @@
             {% endif %}
         </aside>
         <main class="kb-main">
+        <div class="kb-layout-content">
         <div class="header header--classic">
             {% if page == 'detail' %}
             <nav class="kb-header-breadcrumb" aria-label="面包屑导航">
-                <a href="{{ url_for('knowledge_base_index') }}">知识库管理</a><span class="kb-breadcrumb-sep">/</span><span class="kb-header-breadcrumb-current">{{ kb_meta.title }}</span>
+                <a href="{{ url_for('knowledge_base_index') }}">知识库管理</a>
             </nav>
             {% endif %}
-            <div class="kb-header-main">
+            <div class="kb-header-main {% if page == 'detail' %}kb-header-main--detail{% endif %}">
+                {% if page == 'index' %}
                 <div class="kb-header-text">
-                    {% if page == 'index' %}
                     <h1>📚 知识库管理</h1>
                     <p class="kb-header-desc">选择要管理的知识库，进入详情页进行编辑与维护。</p>
-                    {% else %}
-                    <h1>{{ kb_meta.icon }} {{ kb_meta.title }}</h1>
-                    <p class="kb-header-desc">{{ kb_meta.description }}</p>
-                    {% endif %}
                 </div>
+                {% else %}
+                <div class="kb-header-top">
+                    <div class="kb-header-text">
+                        <h1 id="kb-page-title">{{ kb_meta.icon }} {{ kb_meta.title }}</h1>
+                    </div>
+                    <span class="kb-badge kb-header-badge">{{ kb_meta.badge }}</span>
+                </div>
+                <p class="kb-header-desc">{{ kb_meta.description }}</p>
+                {% if kb_type == 'term' %}
+                <div class="kb-header-meta" aria-label="索引统计">
+                    <div class="kb-meta-chip">
+                        <span class="kb-meta-chip-label">片段数</span>
+                        <span class="kb-meta-chip-value" id="term-chunks">—</span>
+                    </div>
+                    <div class="kb-meta-chip">
+                        <span class="kb-meta-chip-label">总字符数</span>
+                        <span class="kb-meta-chip-value" id="term-chars">—</span>
+                    </div>
+                </div>
+                {% elif kb_type == 'paper' %}
+                <div class="kb-header-meta" aria-label="索引统计">
+                    <div class="kb-meta-chip">
+                        <span class="kb-meta-chip-label">片段数</span>
+                        <span class="kb-meta-chip-value" id="paper-chunks">—</span>
+                    </div>
+                    <div class="kb-meta-chip">
+                        <span class="kb-meta-chip-label">总字符数</span>
+                        <span class="kb-meta-chip-value" id="paper-chars">—</span>
+                    </div>
+                </div>
+                {% elif kb_type == 'background' %}
+                <div class="kb-header-meta" aria-label="索引统计">
+                    <div class="kb-meta-chip">
+                        <span class="kb-meta-chip-label">片段数</span>
+                        <span class="kb-meta-chip-value" id="background-chunks">—</span>
+                    </div>
+                    <div class="kb-meta-chip">
+                        <span class="kb-meta-chip-label">总字符数</span>
+                        <span class="kb-meta-chip-value" id="background-chars">—</span>
+                    </div>
+                </div>
+                {% endif %}
+                {% endif %}
             </div>
         </div>
 
@@ -75,30 +116,7 @@
         <div class="kb-container">
             {% if kb_type == 'term' %}
             <!-- 术语知识库配置区域 (可编辑) -->
-            <div class="kb-section editable">
-                <div class="kb-header">
-                    <h2>{{ kb_meta.icon }} {{ kb_meta.title }}</h2>
-                    <span class="kb-badge">{{ kb_meta.badge }}</span>
-                </div>
-                <div class="kb-stats" id="term-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">状态:</span>
-                        <span class="stat-value" id="term-status">加载中...</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">片段数:</span>
-                        <span class="stat-value" id="term-chunks">-</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">总字符数:</span>
-                        <span class="stat-value" id="term-chars">-</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">平均长度:</span>
-                        <span class="stat-value" id="term-avg">-</span>
-                    </div>
-                </div>
-                
+            <div class="kb-section editable" aria-labelledby="kb-page-title">
                 <div class="term-editor">
                     <div class="editor-header">
                         <h3>编辑术语库</h3>
@@ -123,29 +141,7 @@
 
             {% elif kb_type == 'paper' %}
             <!-- 论文知识库：左侧论文列表 + 右侧分段详情 -->
-            <div class="kb-section editable kb-section--master-detail">
-                <div class="kb-header">
-                    <h2>{{ kb_meta.icon }} {{ kb_meta.title }}</h2>
-                    <span class="kb-badge">{{ kb_meta.badge }}</span>
-                </div>
-                <div class="kb-stats" id="paper-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">状态:</span>
-                        <span class="stat-value" id="paper-status">加载中...</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">论文数:</span>
-                        <span class="stat-value" id="paper-count">-</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">片段数:</span>
-                        <span class="stat-value" id="paper-chunks">-</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">总字符数:</span>
-                        <span class="stat-value" id="paper-chars">-</span>
-                    </div>
-                </div>
+            <div class="kb-section editable kb-section--master-detail" aria-labelledby="kb-page-title">
                 <div class="kb-toolbar-row">
                     <button type="button" id="add-paper-btn" class="btn-success">➕ 新增论文</button>
                     <button type="button" id="export-paper-btn" class="btn-secondary">📥 导出统计</button>
@@ -186,25 +182,7 @@
 
             {% elif kb_type == 'background' %}
             <!-- 背景知识库：左侧片段列表 + 右侧正文 -->
-            <div class="kb-section editable kb-section--master-detail">
-                <div class="kb-header">
-                    <h2>{{ kb_meta.icon }} {{ kb_meta.title }}</h2>
-                    <span class="kb-badge">{{ kb_meta.badge }}</span>
-                </div>
-                <div class="kb-stats" id="background-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">状态:</span>
-                        <span class="stat-value" id="background-status">加载中...</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">片段数:</span>
-                        <span class="stat-value" id="background-chunks">-</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">总字符数:</span>
-                        <span class="stat-value" id="background-chars">-</span>
-                    </div>
-                </div>
+            <div class="kb-section editable kb-section--master-detail" aria-labelledby="kb-page-title">
                 <div class="kb-toolbar-row">
                     <button type="button" id="add-background-btn" class="btn-success">➕ 新增片段</button>
                     <button type="button" id="export-background-btn" class="btn-secondary">📥 导出统计</button>
@@ -242,6 +220,7 @@
         </div>
 
         {% endif %}
+        </div>
         </main>
     </div>
 
