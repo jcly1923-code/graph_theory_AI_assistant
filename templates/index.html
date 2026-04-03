@@ -17,7 +17,13 @@
     <div class="app-shell">
         <aside class="app-sidebar" aria-label="应用导航">
             <div class="app-sidebar-brand">
-                <span class="app-sidebar-logo" aria-hidden="true">📐</span>
+                <div class="app-sidebar-logo-icon" aria-hidden="true">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                        <path d="M2 4h12M2 8h8M2 12h5"/>
+                        <circle cx="13" cy="11" r="2.5"/>
+                        <path d="M15 13l1.5 1.5"/>
+                    </svg>
+                </div>
                 <span class="app-sidebar-name">图论学术助手</span>
             </div>
             <p class="app-sidebar-desc">图论论文解析、知识沉淀与智能问答。</p>
@@ -40,36 +46,53 @@
         </aside>
 
         <main class="app-main">
-        <div class="app-layout-content">
-        <div class="chat-container">
-            <div class="chat-box" id="chat-box">
-            </div>
+            <div class="app-main-inner">
+                <header class="app-topbar">
+                    <div class="app-topbar-text">
+                        <span class="app-topbar-title">图论学术助手</span>
+                        <span class="app-topbar-sub">对话 · 检索与知识库联动</span>
+                    </div>
+                </header>
 
-            <details class="assistant-log-panel" id="assistant-log-panel">
-                <summary class="assistant-log-summary">运行日志</summary>
-                <div class="assistant-log-body" id="assistant-log"></div>
-            </details>
+                <div class="app-layout-content">
+                    <div class="chat-container">
+                        <div class="chat-box" id="chat-box">
+                        </div>
 
-            <div class="input-container">
-                <div class="input-wrapper">
-                    <textarea id="message" placeholder="输入您的问题..." maxlength="5000" autocomplete="off" rows="1"></textarea>
-                    <span class="char-count" id="char-count" aria-live="polite">0/5000</span>
+                        <details class="assistant-log-panel" id="assistant-log-panel">
+                            <summary class="assistant-log-summary">运行日志</summary>
+                            <div class="assistant-log-body" id="assistant-log"></div>
+                        </details>
+
+                        <div class="input-area">
+                            <div class="input-box">
+                                <div class="input-wrapper">
+                                    <textarea id="message" placeholder="输入您的问题…" maxlength="5000" autocomplete="off" rows="1"></textarea>
+                                    <span class="char-count" id="char-count" aria-live="polite">0/5000</span>
+                                </div>
+                                <div class="input-actions">
+                                    <button id="upload-btn" class="input-tool-btn" type="button" title="上传PDF文件">
+                                        <span class="btn-icon-text" aria-hidden="true">📎</span>
+                                    </button>
+                                    <button id="send" class="send-btn" type="button">
+                                        <span id="send-text">发送</span>
+                                        <span id="send-icon" style="display: none;">⏎</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="input-hint">
+                                <div class="hint-left">
+                                    <span><kbd>Enter</kbd> 发送</span>
+                                    <span><kbd>Shift</kbd><kbd>Enter</kbd> 换行</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="upload-status" class="upload-status" style="display: none;"></div>
+                        <input type="file" id="file-input" accept=".pdf" style="display: none;">
+                    </div>
                 </div>
-                <div class="button-group">
-                    <button id="upload-btn" class="btn-icon" title="上传PDF文件">
-                        <span class="btn-icon-text">📎</span>
-                    </button>
-                    <button id="send">
-                        <span id="send-text">发送</span>
-                        <span id="send-icon" style="display: none;">⏎</span>
-                    </button>
-                </div>
             </div>
-
-            <div id="upload-status" class="upload-status" style="display: none;"></div>
-            <input type="file" id="file-input" accept=".pdf" style="display: none;">
-        </div>
-        </div>
         </main>
     </div>
 

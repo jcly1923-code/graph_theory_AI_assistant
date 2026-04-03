@@ -17,8 +17,16 @@
     <div class="kb-app-shell">
         <aside class="kb-sidebar" aria-label="知识库导航">
             <div class="kb-sidebar-brand">
-                <a href="{{ url_for('knowledge_base_index') }}" class="kb-sidebar-brand-link">📚 知识库管理</a>
+                <div class="kb-sidebar-logo-icon" aria-hidden="true">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                        <path d="M2 4h12M2 8h8M2 12h5"/>
+                        <circle cx="13" cy="11" r="2.5"/>
+                        <path d="M15 13l1.5 1.5"/>
+                    </svg>
+                </div>
+                <a href="{{ url_for('knowledge_base_index') }}" class="kb-sidebar-brand-link">图论学术助手</a>
             </div>
+            <p class="kb-sidebar-tagline">知识库管理</p>
             <a href="/" class="kb-sidebar-link kb-sidebar-link--primary">返回聊天</a>
             <p class="kb-sidebar-nav-label" id="kb-sidebar-nav-heading">导航菜单</p>
             <nav class="kb-sidebar-nav" aria-labelledby="kb-sidebar-nav-heading">
@@ -35,29 +43,56 @@
             {% endif %}
         </aside>
         <main class="kb-main">
-        <div class="kb-layout-content">
-        <div class="header header--classic">
-            {% if page == 'detail' %}
-            <nav class="kb-header-breadcrumb" aria-label="面包屑导航">
-                <a href="{{ url_for('knowledge_base_index') }}">知识库管理</a>
-            </nav>
-            {% endif %}
-            <div class="kb-header-main {% if page == 'detail' %}kb-header-main--detail{% endif %}">
-                {% if page == 'index' %}
-                <div class="kb-header-text">
-                    <h1>📚 知识库管理</h1>
-                    <p class="kb-header-desc">选择要管理的知识库，进入详情页进行编辑与维护。</p>
-                </div>
-                {% else %}
-                <div class="kb-header-top">
-                    <div class="kb-header-text">
-                        <h1 id="kb-page-title">{{ kb_meta.icon }} {{ kb_meta.title }}</h1>
+        <div class="kb-main-inner">
+        {% if page == 'index' %}
+        <header class="kb-topbar" aria-label="页面顶栏">
+            <div class="kb-topbar-breadcrumb">
+                <a href="/">对话首页</a>
+                <span class="kb-topbar-sep" aria-hidden="true">›</span>
+                <span class="kb-topbar-current">知识库管理</span>
+            </div>
+            <span class="kb-topbar-count">共 {{ kb_pages|length }} 项</span>
+        </header>
+        <div class="kb-layout-content kb-layout-content--index">
+            <div class="kb-index-intro">
+                <h1 class="kb-index-heading">知识库</h1>
+                <p class="kb-index-lead">选择要管理的知识库，进入详情页进行编辑与维护。</p>
+            </div>
+        <ul class="kb-index-list">
+            {% for slug, meta in kb_pages.items() %}
+            <li>
+                <a href="{{ url_for('knowledge_base_detail', kb_type=slug) }}" class="kb-index-card kb-index-card--{{ slug }}">
+                    <span class="kb-index-card-stripe" aria-hidden="true"></span>
+                    <div class="kb-index-card-inner">
+                        <span class="kb-index-card-icon" aria-hidden="true">{{ meta.icon }}</span>
+                        <div class="kb-index-card-body">
+                            <span class="kb-index-card-title">{{ meta.title }}</span>
+                            <span class="kb-index-card-desc">{{ meta.description }}</span>
+                        </div>
+                        <span class="kb-index-card-arrow" aria-hidden="true">→</span>
                     </div>
-                    <span class="kb-badge kb-header-badge">{{ kb_meta.badge }}</span>
-                </div>
-                <p class="kb-header-desc">{{ kb_meta.description }}</p>
+                    <div class="kb-index-card-foot">
+                        <span class="kb-index-card-stats" id="kb-index-stats-{{ slug }}">加载中…</span>
+                    </div>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+        </div>
+        {% else %}
+        <div class="kb-layout-content kb-layout-content--detail">
+        <header class="kb-topbar kb-topbar--detail" aria-label="知识库详情顶栏">
+            <nav class="kb-topbar-breadcrumb" aria-label="面包屑导航">
+                <a href="/">对话首页</a>
+                <span class="kb-topbar-sep" aria-hidden="true">›</span>
+                <a href="{{ url_for('knowledge_base_index') }}">知识库管理</a>
+                <span class="kb-topbar-sep" aria-hidden="true">›</span>
+                <span class="kb-topbar-current" id="kb-page-title">{{ kb_meta.title }}</span>
+            </nav>
+            <div class="kb-detail-topbar-right">
+                <span class="kb-badge kb-header-badge">{{ kb_meta.badge }}</span>
                 {% if kb_type == 'term' %}
-                <div class="kb-header-meta" aria-label="索引统计">
+                <div class="kb-header-meta kb-header-meta--inline" aria-label="索引统计">
                     <div class="kb-meta-chip">
                         <span class="kb-meta-chip-label">片段数</span>
                         <span class="kb-meta-chip-value" id="term-chunks">—</span>
@@ -68,7 +103,7 @@
                     </div>
                 </div>
                 {% elif kb_type == 'paper' %}
-                <div class="kb-header-meta" aria-label="索引统计">
+                <div class="kb-header-meta kb-header-meta--inline" aria-label="索引统计">
                     <div class="kb-meta-chip">
                         <span class="kb-meta-chip-label">片段数</span>
                         <span class="kb-meta-chip-value" id="paper-chunks">—</span>
@@ -79,7 +114,7 @@
                     </div>
                 </div>
                 {% elif kb_type == 'background' %}
-                <div class="kb-header-meta" aria-label="索引统计">
+                <div class="kb-header-meta kb-header-meta--inline" aria-label="索引统计">
                     <div class="kb-meta-chip">
                         <span class="kb-meta-chip-label">片段数</span>
                         <span class="kb-meta-chip-value" id="background-chunks">—</span>
@@ -90,27 +125,11 @@
                     </div>
                 </div>
                 {% endif %}
-                {% endif %}
             </div>
+        </header>
+        <div class="kb-detail-desc">
+            <p class="kb-header-desc"><span class="kb-detail-icon-inline" aria-hidden="true">{{ kb_meta.icon }}</span>{{ kb_meta.description }}</p>
         </div>
-
-        {% if page == 'index' %}
-        <ul class="kb-index-list">
-            {% for slug, meta in kb_pages.items() %}
-            <li>
-                <a href="{{ url_for('knowledge_base_detail', kb_type=slug) }}" class="kb-index-card">
-                    <span class="kb-index-card-icon">{{ meta.icon }}</span>
-                    <div class="kb-index-card-body">
-                        <span class="kb-index-card-title">{{ meta.title }}</span>
-                        <span class="kb-index-card-desc">{{ meta.description }}</span>
-                        <span class="kb-index-card-stats" id="kb-index-stats-{{ slug }}">加载中…</span>
-                    </div>
-                    <span class="kb-index-card-arrow">→</span>
-                </a>
-            </li>
-            {% endfor %}
-        </ul>
-        {% endif %}
 
         {% if page == 'detail' %}
         <div class="kb-container">
@@ -217,6 +236,9 @@
                 </div>
             </div>
             {% endif %}
+        </div>
+
+        {% endif %}
         </div>
 
         {% endif %}
